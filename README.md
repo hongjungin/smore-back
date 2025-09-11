@@ -1,6 +1,7 @@
 # smore-back
 
 `s﻿more-back`은 학습 및 스터디 활동을 관리하는 백엔드 서비스입니다. 이 서비스는 스터디룸, 참여자, 집중도 기록, 포인트, 출석 등의 기능을 다룹니다.
+<img width="1213" height="769" alt="image" src="https://github.com/user-attachments/assets/7a615091-4161-4a48-9bfe-634288a823dd" />
 
 ---
 

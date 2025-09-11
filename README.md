@@ -1,6 +1,9 @@
 # smore-back
 
 `s﻿more-back`은 학습 및 스터디 활동을 관리하는 백엔드 서비스입니다. 이 서비스는 스터디룸, 참여자, 집중도 기록, 포인트, 출석 등의 기능을 다룹니다.
+
+<br>
+
 <img width="1213" height="769" alt="image" src="https://github.com/user-attachments/assets/7a615091-4161-4a48-9bfe-634288a823dd" />
 
 ---
@@ -43,6 +46,8 @@
 | **Dockerfile** | 컨테이너 빌드/배포 지원 |
 
 ---
+
+<br>
 
 ##  Getting Started
 
@@ -90,7 +95,9 @@ http://localhost:8081 에서 서버가 실행됩니다.
 ### 6. API 테스트
 Postman, Insomnia 또는 Swagger 등을 이용해 엔드포인트 테스트를 진행할 수 있습니다.
 
-## 📌 API Endpoints
+<br>
+
+## API Endpoints
 
 - **POST** `/api/auth/signup` — 회원가입  
 - **POST** `/api/auth/login` — 로그인 (JWT 발급)  
@@ -111,7 +118,9 @@ Postman, Insomnia 또는 Swagger 등을 이용해 엔드포인트 테스트를 �
 
 ---
 
-## 📂 Folder Structure
+<br>
+
+## Folder Structure
 
 ```plaintext
 └── smore-back/

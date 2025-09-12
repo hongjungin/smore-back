@@ -151,3 +151,61 @@ Postman, Insomnia 또는 Swagger 등을 이용해 엔드포인트 테스트를 �
     └── .env
 ```
 
+
+## Testing
+
+본 프로젝트는 단위/슬라이스/통합 레벨에서 테스트를 작성하여 안정성을 확보했습니다.
+컨트롤러의 예외 매핑, 서비스의 비즈니스 규칙, 저장소 쿼리, 외부 연동(Webhook/Flask)까지 커버합니다.
+
+### 테스트 도구 및 환경
+
+- JUnit 5, Mockito
+
+- Spring Boot Test: @WebMvcTest, @DataJpaTest, @SpringBootTest
+
+- Testcontainers: MySQL, Redis (로컬에 Docker 필요)
+
+- H2 인메모리 DB: 빠른 슬라이스 테스트용
+
+- ObjectMapper, MockMvc, TestEntityManager
+
+
+### 커버리지 범위
+
+레이어	주요 검증 항목	대표 시나리오
+Controller	요청/응답 포맷, 인증 필터, 전역 예외 매핑	비참여자 접근시 403, 최대 인원 초과시 409, 존재하지 않는 리소스 404
+Service	비즈니스 규칙, 트랜잭션 경계, 캐시 전략	스터디룸 입장/퇴장, 중복 출석 차단, 집중도 기록 검증
+Repository	쿼리 정확성, 페이징/정렬, 인덱스 활용	기간별 집중도 집계, 룸별/유저별 조회
+External	LiveKit Webhook, Flask(API) 통신	참여자 이벤트 수신 및 카운팅, 모델 API 실패시 복구 로직
+
+
+### 실행 방법
+```
+# 전체 테스트
+./gradlew test
+
+# 특정 패키지/클래스만
+./gradlew test --tests "*StudyRoom*"
+./gradlew test --tests "org.oreo.smore.api.StudyRoomControllerTest"
+
+# CI 환경에서 (JUnit XML + 커버리지 리포트 생성)
+./gradlew clean test jacocoTestReport
+```
+
+Testcontainers(통합 테스트)는 Docker가 필요합니다. Docker가 없으면 슬라이스 테스트만 우선 실행하세요.
+
+### 외부 연동 모킹 전략
+
+- LiveKit Webhook: Controller 단에서 서명 검증을 우회(테스트용 빈/프로퍼티)하고 이벤트 JSON을 직접 주입.
+
+- Flask(집중도/AI) API: `RestTemplateBuilder`/`WebClient`를 주입받도록 설계하고, 테스트에서는 `MockRestServiceServer` 또는 `Mockito`로 스텁.
+
+- 장애 시나리오: 타임아웃/5xx 응답을 스텁해 재시도/폴백 동작 검증.
+
+테스트 데이터 관리
+
+- Fixture Builder 패턴(정적 팩토리)로 엔티티 생성: `UserFixture`, `StudyRoomFixture`, `FocusRecordFixture`
+
+- 슬라이스 테스트: H2 사용, `@DataJpaTest` + `TestEntityManager`
+
+- 통합 테스트: Testcontainers(MySQL/Redis)로 실제와 유사한 환경

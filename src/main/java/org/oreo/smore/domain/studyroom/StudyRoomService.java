@@ -79,6 +79,12 @@ public class StudyRoomService {
             String category,
             Pageable pageable
     ) {
+        if ((search == null || search.isBlank()) &&
+                (category == null || category.isBlank())) {
+            // 필터 없을 때는 Fetch Join 사용
+            return roomRepository.findAllWithUserFetchJoin(cursor, pageable);
+        }
+
         Specification<StudyRoom> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             predicates.add(cb.isNull(root.get("deletedAt")));
@@ -124,20 +130,46 @@ public class StudyRoomService {
             List<StudyRoom> rooms,
             boolean hideFullRooms
     ) {
+
+        // 모든 방 ID 수집
+        List<Long> roomIds = rooms.stream()
+                .map(StudyRoom::getRoomId)
+                .collect(Collectors.toList());
+
+        if (roomIds.isEmpty()) {
+            return List.of();
+        }
+
+        // Bulk Query로 참가자 수 한 번에 조회
+        Map<Long, Long> participantCountMap = participantRepository
+                .countActiveParticipantsByRoomIds(roomIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        arr -> (Long) arr[0],
+                        arr -> (Long) arr[1]
+                ));
+
         return rooms.stream()
-                .map(this::toDto)
+                .map(room -> toDto(room, participantCountMap))
                 .filter(dto -> !hideFullRooms || dto.getCurrentParticipants() < dto.getMaxParticipants())
                 .collect(Collectors.toList());
     }
 
-    private StudyRoomInfoReadResponse toDto(StudyRoom room) {
-        long count = participantRepository.countByRoomIdAndLeftAtIsNull(room.getRoomId());
-        User creator = userRepo.findById(room.getUserId())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Creator not found: " + room.getUserId()
-                ));
-        return StudyRoomInfoReadResponse.of(room, count, creator.getNickname());
+    private StudyRoomInfoReadResponse toDto(StudyRoom room, Map<Long, Long> participantCountMap) {
+        // Map에서 참가자 수 꺼내기 -> 없으면 0
+        long count = participantCountMap.getOrDefault(room.getRoomId(), 0L);
+
+        User creator = room.getUser();
+
+        String creatorNickname = (creator != null) ? creator.getNickname() : "Unknown";
+
+        return StudyRoomInfoReadResponse.of(room, count, creatorNickname);
+//        User creator = userRepo.findById(room.getUserId())
+//                .orElseThrow(() -> new ResponseStatusException(
+//                        HttpStatus.NOT_FOUND,
+//                        "Creator not found: " + room.getUserId()
+//                ));
+//        return StudyRoomInfoReadResponse.of(room, count, creator.getNickname());
     }
 
     private void applyPopularSort(List<StudyRoomInfoReadResponse> dtos) {

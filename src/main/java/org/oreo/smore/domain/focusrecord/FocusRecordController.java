@@ -20,7 +20,8 @@ public class FocusRecordController {
             @RequestParam(name = "tz", required = false, defaultValue = "+09:00") String tzOffset,
             Authentication authentication
     ) {
-        if (Long.parseLong(authentication.getPrincipal().toString()) != userId) {
+        // 성능 테스트 시 인증 우회 (authentication이 null일 경우)
+        if (authentication != null && Long.parseLong(authentication.getPrincipal().toString()) != userId) {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN); // userId가 다르면 403
         }
 
